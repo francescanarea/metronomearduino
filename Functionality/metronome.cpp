@@ -13,7 +13,12 @@ double userBeatTiming[NUM_BEATS]; //stores the NUM_BEATS beats based on user tap
 //pin setup here
 //int servopin = 
 //int photoresistorPin = 
+//int led1pin
+//int led2pin
+//int led3pin
+//int led4pin
 
+int ledNum = 1;
 int button1state = 0;
 int button2state = 0;
 int button3state = 0;
@@ -29,10 +34,10 @@ void setup(){
 
 	pinMode(buzzer, OUTPUT);
 
-	pinMode(led1, OUTPUT);
-	pinMode(led2, OUTPUT);
-	pinMode(led3, OUTPUT);
-	pinMode(led4, OUTPUT);
+	pinMode(led1pin, OUTPUT);
+	pinMode(led2pin, OUTPUT);
+	pinMode(led3pin, OUTPUT);
+	pinMode(led4pin, OUTPUT);
 	
 	myservo.attach(servopin); // attaches the servo on pin 12 to a servo object
 
@@ -62,7 +67,7 @@ void loop(){
 	//gets value of buttons, if any of them are pressed then it will stop the metronome
 	
 	if(metronomeExecute){
-		executeMetronome(metronomeExecuteBuzzer, beat);
+		executeMetronome(metronomeExecuteBuzzer, beat, ledNum);
 	}
 	
 	//photoresistor code
@@ -81,19 +86,21 @@ void loop(){
 		//digitalWrite(ledPin, HIGH); //turn LED on 
 	}
 
-	
+	//for tracking which led it plays based on teh beat
+	ledNum++;
+	if(ledNum == 5){
+		ledNum = 1;
+	}
 
-	
-	
 }
 
-void executeMetronome(bool metronomeExecuteBuzzer, int beat){
+void executeMetronome(bool metronomeExecuteBuzzer, int beat, int ledNum){
 	//executeServo(beat);
 	
-	executeLeds(beat);
+	executeLeds(beat, ledNum);
 	
 	if(metronomeExecuteBuzzer){
-		executeBuzzer(int beat);
+		executeBuzzer(beat);
 	}
 }
 
@@ -115,10 +122,26 @@ void executeBuzzer(int beat){
      noTone(buzzerPin);
 }
 
-void executeLeds(int beat ){
-    digitalWrite(ledPin, HIGH);
+void executeLeds(int beat, int ledNum){
+    int curLedPinValue = 0; //just assumes 0 but will be changed based on ledNum
+	
+ //4 leds go one at a time ie, led1 for beat1, led2 for beat2, led3 for beat3, led4 for beat4 then loops again
+    if(ledNum == 1){
+    	curLedPinValue = led1pin;
+    }
+   if(ledNum == 2){
+    	curLedPinValue = led2pin;
+    }
+    if(ledNum == 3){
+    	curLedPinValue = led3pin;
+    }
+    if(ledNum == 4){
+    	curLedPinValue = led4pin;
+    }
+	
+    digitalWrite(curLedPinValue, HIGH);
     delay(beat);
-    digitalWrite(ledPin, LOW);
+    digitalWrite(curLedPinValue, LOW);
 }
 
 
