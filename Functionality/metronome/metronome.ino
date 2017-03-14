@@ -3,40 +3,45 @@ Servo myservo;
 
 unsigned long time; //for timing the time in between the beats 
 
-int beat = 0; //variable to store beat once calculated
-int numTaps = 0; //counts the number of beats it has recieved
-int numBeats = 0; //4 taps = 3 beats
-
-//the metronome will initially not be playing and once it recieves 4 input taps
-bool metronomeExecute = false; 
-bool metronomeExecuteBuzzer = false;
-
-const int buzzerToneForMetronome = 300;
-
-const int PHOTORESISTOR_RANGE = 300;//upper bound value when resistor is covered (when it is below this, registers beat)
+const int buzzerToneForMetronome = 600;
 const int NUM_BEATS = 3; //the nubmer of beats the metronome requires to be measured in order to start 
 const int NUM_TAPS = 4;
+
+int beat = 0, //variable to store beat once calculated
+    beatNum = 0,
+    numTaps = 0, //counts the number of beats it has recieved
+    numBeats = 0, //4 taps = 3 beats
+    curBeat=0, 
+    curBeatTime=0, 
+    lastBeat=0;
+
 double userBeatTiming[NUM_BEATS]; //stores the NUM_BEATS beats based on user taps 
+
+
+/******* SONG STUFF ************/
+int frequencies[] = {330, 349, 370, 392, 415, 440, 466, 494, 523, 554, 587, 622, 660};
+int notes[] = {11, 11, 12, 7, 4};
+String names[] = {"d#", "d#", "e", "b", "g#"};
+int duration[] = {7,2,4,2,1};
+/*******************************/
  
 //pin setup here
 int servo1pin = 8,
     servo2pin = 10,
-    photoresistorPin = A0,
-    led1pin = 2, 
+    tapper = 2,
+    led1pin = 3, 
     led2pin = 4,
-    buzzer = 11;
+    buzzer = 11,
+    button1 = 6,
+    button2 = 7;
 
-int ledNum = 1;
-int button1state = 0;
-int button2state = 0;
+int button1state = 0,
+    button2state = 0;
 
-bool button1on = false;
-bool button2on = false;
+bool button1on = false,
+     button2on = false;
 
 bool tap = false, prevTap = false;
-
-int buzzerPin = 4; //setup for buzzer pin on arduino board
-
 
 //setting up the pins, photoresistor, buzzer, buttons, LEDs
 void setup(){
@@ -44,10 +49,9 @@ void setup(){
 //  pinMode(button2, INPUT);
 
   pinMode(buzzer, OUTPUT);
-
+  pinMode(tapper, INPUT);
   pinMode(led1pin, OUTPUT);
   pinMode(led2pin, OUTPUT);
-
   digitalWrite(led1pin, LOW);
   digitalWrite(led1pin, LOW);
   
@@ -61,90 +65,75 @@ void loop(){
   //gets milliseconds since program was started or reset
   time = millis();
 
-  
-        
-  //gets all the button states to see if song should be played, turning off the buzzer
-//  button1state = digitalRead(button1Pin);
-//  button2state = digitalRead(button2Pin);
-//  button3state = digitalRead(button3Pin);
-//  button4state = digitalRead(button4Pin);
-
-//  if(numTaps == NUM_TAPS){
-//    metronomeExecute = true;
-//    metronomeExecuteBuzzer = true;
-//    beat = calculateBeat(userBeatTiming);
-//  }
-//  
-//  //if any of the buttons are pressed, if any of them are pressed then it will stop the buzzer because a song will be played instead
-//  if(button1state == 1 || button2state == 1){
-//    metronomeExecuteBuzzer = false; //will not let the metronome code with buzzer 
-//  }
-//  //checking button states to see if you should play any songs
-//  if(button1state == 1 && button1on == false){
-//    button1on = true;
-//    playSong1(button1on);
-//  }
-//  if(button2state == 1 && button2on == false){
-//    button2on = true;
-//    playSong2(button2on);
-//  }
-//  if(button1on == false && button1state == 1){ 
-//    button1on = false; //turns off the song
-//  }
-//  if(button2on == false && button2state == 1){
-//    button2on = false; //turns off the song 
-//  }
-//
-//  if(metronomeExecute){
-//    executeMetronome(metronomeExecuteBuzzer, beat, ledNum);
-//  }
-
-  int photoresistorValue = analogRead(photoresistorPin); //reads the photoresistor value 
-  int curBeat, curBeatTime, lastBeat;
-
-  //numTaps = 10;
-  
-  if(numTaps<5){
-    if(photoresistorValue < 1){ //once the value goes below 300, registers a beat 
-      digitalWrite(led1pin, HIGH);
-//      curBeat = time; //gets current milliseconds
-//      if(numTaps != 1){
-//        curBeatTime = curBeat - lastBeat;
-//        userBeatTiming[numBeats] = curBeatTime;
-//        numBeats++; //adds one to number of beats stored in array 
-//      }
-//      //saves the current time to use as last time to compare with next time its tapped
-//      int lastBeat = time; 
+  //FIRST 4 BEATS
+  if(numTaps < NUM_TAPS){
+    int pressed = digitalRead(tapper);
+    
+    if(pressed == 1){
       tap = true;
+      digitalWrite(led1pin, HIGH);
     }else{
-      digitalWrite(led1pin, LOW);
       tap = false;
+      digitalWrite(led1pin, LOW);
     }
-    Serial.println(tap);
-  }
 
+
+    //if a beat is registered
+    if(tap == false && prevTap == true){
+      numTaps++;
+      curBeat = time; //gives you time of current beat execution
+      if(numTaps != 1){
+        curBeatTime = curBeat - lastBeat;
+        userBeatTiming[numBeats] = curBeatTime;
+        numBeats++; 
+      }
+      lastBeat = time;
+      Serial.print("Num Taps, ");
+      Serial.println(numTaps);
+      Serial.print("curBeatTime, ");
+      Serial.println(curBeatTime);
+    }
   
-  if(tap == false && prevTap == true)
-    Serial.println("boi");
-    numTaps++;
   prevTap = tap;
   
-  //for tracking which led it plays based on teh beat
-  ledNum++;
-  if(ledNum == 5){
-    ledNum = 1;
   }
 
-}
+  if(numTaps == 4){
+    beat = calculateBeat(userBeatTiming);
+//    Serial.print("Avg Beat: ");
+//    Serial.println(beat);
 
-void executeMetronome(bool metronomeExecuteBuzzer, int beat, int ledNum){
-  //executeServo(beat);
-  
-  executeLeds(beat, ledNum);
-  
-  if(metronomeExecuteBuzzer){
-    executeBuzzer(beat);
+    //LEDS ON 
+    if(beatNum == 1){ 
+      digitalWrite(led1pin, HIGH); 
+      tone(buzzer, 2*(buzzerToneForMetronome));
+    } 
+    else{ 
+      digitalWrite(led2pin, HIGH); 
+      tone(buzzer, buzzerToneForMetronome);
+    }
+     
+    delay(20);
+
+    //LEDS OFF
+    if(beatNum == 1){ digitalWrite(led1pin, LOW); } 
+    else{ digitalWrite(led2pin, LOW); }
+     
+    noTone(buzzer);
+    delay(beat);
+ 
+    if(beatNum++ == 4){
+      beatNum = 1;
+    }
+    Serial.println(beatNum);
   }
+  
+  int pressed1 = digitalRead(button1);
+  if(pressed1 == 1){
+    Serial.println(button1on);  
+    playShootingStar();
+  }
+  
 }
 
 int calculateBeat(double userBeatTiming[]){
@@ -154,52 +143,39 @@ int calculateBeat(double userBeatTiming[]){
   }
   return int(num/NUM_BEATS); //averages the beat timings to give you average beat for metronome in MILLISECONDS
 }
-
-
-//void executeServo(int beat){ 
+//
+//bool checkButtonStatus(int buttonPinValue){ 
+//  int buttonValue = digitalRead(buttonPinValue);
+//  if(buttonValue == 1){
+//     if(button1on){ 
+//      button1on = false; 
+//     } //button1on is global
+//     else { button1on = true; }
+//    }
+//  return button1on;
 //}
 
-void executeBuzzer(int beat){
-     tone(buzzerPin, buzzerToneForMetronome);
-     delay(beat);
-     noTone(buzzerPin);
-}
 
-void executeLeds(int beat, int ledNum){
-    int curLedPinValue = 0; //just assumes 0 but will be changed based on ledNum
-  
- //4 leds go one at a time ie, led1 for beat1, led2 for beat2, led3 for beat3, led4 for beat4 then loops again
-    if(ledNum == 1){
-      curLedPinValue = led1pin;
-    }
-   if(ledNum == 2){
-      curLedPinValue = led2pin;
-    }
-    if(ledNum == 3){
-      curLedPinValue = led2pin;
-    }
-    if(ledNum == 4){
-      curLedPinValue = led2pin;
-    }
-  
-    digitalWrite(curLedPinValue, HIGH);
-    delay(beat);
-    digitalWrite(curLedPinValue, LOW);
-}
 
-void playSong1(bool button1on){
-  if(button1on){
-    playShootingStar();
+void playShootingStar(){
+  int bruh = sizeof(notes)/sizeof(int);
+  if(beat==0)
+    beat = 480;
+ 
+  for(int j = 0; j<2; j++){
+    for(int i = 0; i<5;i++){
+        tone(buzzer, frequencies[notes[i]]);
+        Serial.println(frequencies[notes[i]]);
+        delay((beat/4)*duration[i]);
+        noTone(buzzer);
+        delay(10);
+      }
+    }
   }
-}
+
 
 void playSong2(bool button2on){
   if(button2on){
     //plays another song
   }
 }
-
-void playShootingStar(){
-
-}
-
