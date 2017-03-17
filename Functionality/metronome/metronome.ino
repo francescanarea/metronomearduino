@@ -1,5 +1,5 @@
 #include <Servo.h>
-Servo myservo;
+Servo myservo1, myservo2;
 
 unsigned long time; //for timing the time in between the beats 
 
@@ -7,8 +7,8 @@ const int buzzerToneForMetronome = 600;
 const int NUM_BEATS = 3; //the nubmer of beats the metronome requires to be measured in order to start 
 const int NUM_TAPS = 4;
 
-int beat = 0, //variable to store beat once calculated
-    beatNum = 0,
+int beat = 10000, //variable to store beat once calculated
+    beatNum = 1,
     numTaps = 0, //counts the number of beats it has recieved
     numBeats = 0, //4 taps = 3 beats
     curBeat=0, 
@@ -23,6 +23,8 @@ int frequencies[] = {330, 349, 370, 392, 415, 440, 466, 494, 523, 554, 587, 622,
 int notes[] = {11, 11, 12, 7, 4};
 String names[] = {"d#", "d#", "e", "b", "g#"};
 int duration[] = {7,2,4,2,1};
+
+
 /*******************************/
  
 //pin setup here
@@ -43,6 +45,8 @@ bool button1on = false,
 
 bool tap = false, prevTap = false;
 
+int batonDelay = 100, halfBatonDelay = 50, ledDelay = 20;
+
 //setting up the pins, photoresistor, buzzer, buttons, LEDs
 void setup(){
 //  pinMode(button1, INPUT);
@@ -55,7 +59,10 @@ void setup(){
   digitalWrite(led1pin, LOW);
   digitalWrite(led1pin, LOW);
   
-  myservo.attach(servo1pin); 
+  myservo1.attach(servo1pin);
+  myservo2.attach(servo2pin);
+  myservo1.write(90);
+  myservo2.write(120);
 
   Serial.begin(9600);
 }
@@ -77,7 +84,6 @@ void loop(){
       digitalWrite(led1pin, LOW);
     }
 
-
     //if a beat is registered
     if(tap == false && prevTap == true){
       numTaps++;
@@ -88,44 +94,83 @@ void loop(){
         numBeats++; 
       }
       lastBeat = time;
-      Serial.print("Num Taps, ");
-      Serial.println(numTaps);
-      Serial.print("curBeatTime, ");
-      Serial.println(curBeatTime);
+//      Serial.print("Num Taps, ");
+//      Serial.println(numTaps);
+//      Serial.print("curBeatTime, ");
+//      Serial.println(curBeatTime);
     }
   
   prevTap = tap;
-  
   }
 
+  //MAKE SURE BEAT ISN"T TOO SHORT
+  if(beat<(4*batonDelay)){
+    Serial.println("FAIL, beat too fast.");
+    tone(buzzer, buzzerToneForMetronome);
+    delay(1000);
+    noTone(buzzer);
+    //reset everything
+    numTaps = 0;
+    numBeats = 0;
+    beat = 10000;
+  }
+
+  //ALL OTHER BEATS
   if(numTaps == 4){
     beat = calculateBeat(userBeatTiming);
-//    Serial.print("Avg Beat: ");
-//    Serial.println(beat);
 
     //LEDS ON 
-    if(beatNum == 1){ 
+    if(beatNum == 1){
+      myservo1.write(90);
+      myservo2.write(90);
       digitalWrite(led1pin, HIGH); 
       tone(buzzer, 2*(buzzerToneForMetronome));
     } 
-    else{ 
+    else if (beatNum == 2){
+      myservo1.write(120);
+      myservo2.write(120);
       digitalWrite(led2pin, HIGH); 
       tone(buzzer, buzzerToneForMetronome);
     }
-     
-    delay(20);
-
+    else if (beatNum == 3){ 
+      myservo1.write(60);
+      myservo2.write(120);
+      digitalWrite(led2pin, HIGH); 
+      tone(buzzer, buzzerToneForMetronome);
+    }
+    else { 
+      myservo1.write(90);
+      myservo2.write(120);
+      digitalWrite(led2pin, HIGH); 
+      tone(buzzer, buzzerToneForMetronome);
+    }
+    
+    delay(ledDelay);
+    
     //LEDS OFF
-    if(beatNum == 1){ digitalWrite(led1pin, LOW); } 
-    else{ digitalWrite(led2pin, LOW); }
-     
+    if(beatNum == 1){ 
+      digitalWrite(led1pin, LOW); 
+    } else { 
+      digitalWrite(led2pin, LOW); 
+    }
     noTone(buzzer);
-    delay(beat);
- 
+
+    if(beatNum == 2){
+      delay(halfBatonDelay-ledDelay);
+      myservo2.write(90);
+      delay(beat-halfBatonDelay-ledDelay);
+    } else if(beatNum == 3) {
+      delay(batonDelay-ledDelay);
+      myservo2.write(90);
+      delay(beat-batonDelay-ledDelay);
+    } else {
+      delay(beat-ledDelay);
+    }
+
     if(beatNum++ == 4){
       beatNum = 1;
     }
-    Serial.println(beatNum);
+//    Serial.println(beatNum);
   }
   
   int pressed1 = digitalRead(button1);
@@ -133,7 +178,10 @@ void loop(){
     Serial.println(button1on);  
     playShootingStar();
   }
-  
+
+
+  //DEBUG
+  Serial.println(beat);
 }
 
 int calculateBeat(double userBeatTiming[]){
@@ -158,11 +206,14 @@ int calculateBeat(double userBeatTiming[]){
 
 
 void playShootingStar(){
+
+
+  
   int bruh = sizeof(notes)/sizeof(int);
   if(beat==0)
     beat = 480;
  
-  for(int j = 0; j<2; j++){
+  for(int j = 0; j<4; j++){
     for(int i = 0; i<5;i++){
         tone(buzzer, frequencies[notes[i]]);
         Serial.println(frequencies[notes[i]]);
