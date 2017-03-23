@@ -39,7 +39,7 @@ bool tap = false,
 
 bool terminate = false;
 
-int batonDelay = 90, 
+int batonDelay = 80, 
     halfBatonDelay = 45, 
     ledDelay = 20;
 
@@ -47,8 +47,8 @@ long startConducting = 2147483647;
 
 //setting up the pins, photoresistor, buzzer, buttons, LEDs
 void setup(){
-//  pinMode(button1, INPUT);
-//  pinMode(button2, INPUT);
+  pinMode(button1, INPUT);
+  pinMode(button2, INPUT);
 
   pinMode(buzzer, OUTPUT);
   pinMode(tapper, INPUT);
@@ -98,7 +98,7 @@ void loop(){
   }
 
   //MAKE SURE BEAT ISN'T TOO SHORT
-  if(beat<(4*batonDelay)){
+  if(beat<360){
     Serial.println("FAIL, beat too fast.");
     tone(buzzer, buzzerToneForMetronome);
     delay(1000);
@@ -129,7 +129,8 @@ void loop(){
     }
     else if (beatNum == 3){ 
       myservo1.write(60);
-      myservo2.write(120);
+      myservo2.write(90);
+//      myservo2.write(120);
       digitalWrite(led2pin, HIGH); 
       tone(buzzer, buzzerToneForMetronome);
     }
@@ -154,11 +155,13 @@ void loop(){
       delay(halfBatonDelay-ledDelay);
       myservo2.write(90);
       delay(beat-halfBatonDelay-ledDelay);
-    } else if(beatNum == 3) {
-      delay(batonDelay-ledDelay);
-      myservo2.write(90);
-      delay(beat-batonDelay-ledDelay);
-    } else {
+    } 
+//    else if(beatNum == 3) {
+//      delay(batonDelay-ledDelay);
+//      myservo2.write(90);
+//      delay(beat-batonDelay-ledDelay);
+//    } 
+    else {
       delay(beat-ledDelay);
     }
 
@@ -196,8 +199,6 @@ void loop(){
     reset();
   }
   
-  //DEBUG
-  Serial.println(count);
 }
 
 int calculateBeat(double userBeatTiming[]){
@@ -207,19 +208,6 @@ int calculateBeat(double userBeatTiming[]){
   }
   return int(num/NUM_BEATS); //averages the beat timings to give you average beat for metronome in MILLISECONDS
 }
-//
-//bool checkButtonStatus(int buttonPinValue){ 
-//  int buttonValue = digitalRead(buttonPinValue);
-//  if(buttonValue == 1){
-//     if(button1on){ 
-//      button1on = false; 
-//     } //button1on is global
-//     else { button1on = true; }
-//    }
-//  return button1on;
-//}
-
-
 
 void playShootingStar(){
   Serial.println("Shooting Star!");
@@ -250,10 +238,8 @@ void playShootingStar(){
         }
         if (i == 2){ 
           myservo1.write(60);
-          myservo2.write(120);
-          delay(batonDelay);
           myservo2.write(90);
-          delay(beat-batonDelay);
+          delay(beat);
         }
         if (i == 3){ 
           myservo1.write(90);
