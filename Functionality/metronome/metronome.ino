@@ -226,10 +226,17 @@ void playShootingStar(){
           delay(beat/4);
           myservo1.write(90);
           myservo2.write(90);
-          delay(beat);
+          digitalWrite(led1pin, HIGH);
+          delay(ledDelay);
+          digitalWrite(led1pin, LOW);
+          delay(beat-ledDelay);
+          
           myservo1.write(120);
           myservo2.write(120);
-          delay(halfBatonDelay);
+          digitalWrite(led2pin, HIGH);
+          delay(ledDelay);
+          digitalWrite(led2pin, LOW);
+          delay(halfBatonDelay-ledDelay);
           myservo2.write(90);
           delay(beat/2-halfBatonDelay);
         } 
@@ -239,12 +246,18 @@ void playShootingStar(){
         if (i == 2){ 
           myservo1.write(60);
           myservo2.write(90);
-          delay(beat);
+          digitalWrite(led2pin, HIGH);
+          delay(ledDelay);
+          digitalWrite(led2pin, LOW);
+          delay(beat-ledDelay);
         }
         if (i == 3){ 
           myservo1.write(90);
           myservo2.write(120);
-          delay(beat/2);
+          digitalWrite(led2pin, HIGH);
+          delay(ledDelay);
+          digitalWrite(led2pin, LOW);
+          delay((beat/2)-ledDelay);
         }
         if (i == 4){
           delay(beat/4);
@@ -272,20 +285,27 @@ void playBumblebee(){
       if(i==0){
         myservo1.write(90);
         myservo2.write(90);
+        digitalWrite(led1pin, HIGH); 
       }
       if(i==4){
         myservo1.write(120);
         myservo2.write(90);
+        digitalWrite(led2pin, HIGH);
       }
       if(i==8){
         myservo1.write(60);
         myservo2.write(90);
+        digitalWrite(led2pin, HIGH);
       }
       if(i==12){
         myservo1.write(90);
         myservo2.write(120);
+        digitalWrite(led2pin, HIGH);
       }
-      delay((beat/4-10)*duration[i]);
+      delay(ledDelay);
+      digitalWrite(led1pin, LOW); 
+      digitalWrite(led2pin, LOW); 
+      delay((beat/4-10)*duration[i]-ledDelay);
       noTone(buzzer);
       delay(10);
     }
